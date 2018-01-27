@@ -1,0 +1,10 @@
+/bin/
+.project
+/target/
+/.settings/
+.classpath
+
+commands/jenkins/docker/phantomjs-2.1.1-linux-x86_64.tar.bz2
+commands/jenkins/docker/apache-maven-3.3.9-bin.tar.gz
+rpmweb/package-lock.json
+package-lock.json

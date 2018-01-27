@@ -1,0 +1,16 @@
+server:
+    port: 8080
+
+# datasource configuration    
+spring:
+    datasource:
+        url: jdbc:sqlserver://localhost:1435;databaseName=test
+        username: sa
+        password: lchen283!
+        driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+        
+# redis configuration
+    redis: 
+        url: localhost:6379
+        host: localhost
+        password: 
