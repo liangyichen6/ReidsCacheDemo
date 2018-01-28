@@ -32,7 +32,7 @@ public class AppTest {
 				
 				@Override
 				public void run() {
-					bookService.getBookByNameSync("Thinking in java");
+					bookService.getBookByNameReadWriteLock("Thinking in java");
 					countDownLatch.countDown();
 				}
 			}).start();

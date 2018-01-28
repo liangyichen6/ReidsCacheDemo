@@ -1,6 +1,8 @@
 package com.practice.RedisCacheDemo.service.impl;
 
 import java.util.Objects;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,8 @@ public class BookServiceImpl implements BookService, InitializingBean {
 	private HashOperations<String, String, Book> hashOps;
 
 	private final static String KEY = "BOOK";
+
+	private final ReadWriteLock rwl = new ReentrantReadWriteLock();
 
 	@Override
 	public Book getBookByName(String name) {
@@ -79,12 +83,12 @@ public class BookServiceImpl implements BookService, InitializingBean {
 					hashOps.put(KEY, name, book);
 					return book;
 				}
-				
+
 				log.info("Get book from redis cache");
 				return book;
 			}
 		}
-		
+
 		log.info("Get book from redis cache");
 		return book;
 	}
@@ -94,10 +98,39 @@ public class BookServiceImpl implements BookService, InitializingBean {
 		hashOps = redisTemplate.opsForHash();
 	}
 
+	
 	@Override
 	public Book getBookByNameReadWriteLock(String name) {
+		rwl.readLock().lock();
+		Book book = hashOps.get(KEY, name);
+		
+		if (Objects.isNull(book)) {
+			try {
+				
+				rwl.readLock().unlock();
 
-		return null;
+				rwl.writeLock().lock();
+				book = hashOps.get(KEY, name);
+				try {
+					if (Objects.isNull(book)) {
+						log.info("Get book from database");
+						book = this.bookMapper.getBookByName(name);
+						hashOps.put(KEY, name, book);
+					} 
+				} finally {
+					rwl.writeLock().unlock();
+				}
+				
+				rwl.readLock().lock();
+				log.info("Get book from redis cache 1");
+				return book;
+			} finally {
+					rwl.readLock().unlock();
+			}
+		}
+
+		log.info("Get book from redis cache 2");
+		return book;
 	}
 
 }
