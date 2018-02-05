@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.practice.RedisCacheDemo.annotation.RedisCacheable;
 import com.practice.RedisCacheDemo.domain.Book;
 import com.practice.RedisCacheDemo.mapper.BookMapper;
 import com.practice.RedisCacheDemo.service.BookService;
@@ -98,38 +99,14 @@ public class BookServiceImpl implements BookService, InitializingBean {
 		hashOps = redisTemplate.opsForHash();
 	}
 
-	
 	@Override
+	@RedisCacheable(cacheKey=KEY)
 	public Book getBookByNameReadWriteLock(String name) {
-		rwl.readLock().lock();
-		Book book = hashOps.get(KEY, name);
-		
-		if (Objects.isNull(book)) {
-			try {
-				
-				rwl.readLock().unlock();
 
-				rwl.writeLock().lock();
-				book = hashOps.get(KEY, name);
-				try {
-					if (Objects.isNull(book)) {
-						log.info("Get book from database");
-						book = this.bookMapper.getBookByName(name);
-						hashOps.put(KEY, name, book);
-					} 
-				} finally {
-					rwl.writeLock().unlock();
-				}
-				
-				rwl.readLock().lock();
-				log.info("Get book from redis cache 1");
-				return book;
-			} finally {
-					rwl.readLock().unlock();
-			}
-		}
+		log.info("Get book from database");
+		Book book = this.bookMapper.getBookByName(name);
+		hashOps.put(KEY, name, book);
 
-		log.info("Get book from redis cache 2");
 		return book;
 	}
 
